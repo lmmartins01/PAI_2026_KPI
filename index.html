@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard KPIs · PAI-IC · ULS Loures-Odivelas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a1929;
+    --bg-card: #0f2942;
+    --bg-card-2: #143352;
+    --ink: #e8f1f8;
+    --ink-soft: #a8c2d6;
+    --ink-dim: #6f8aa3;
+    --azul: #3aa0e8;
+    --azul-escuro: #1d6fb8;
+    --verde: #3dd9a8;
+    --verde-escuro: #13a981;
+    --acento: #f5d76e;
+    --alerta: #e85d75;
+    --linha: rgba(168,194,214,.18);
+    --linha-forte: rgba(168,194,214,.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    line-height: 1.5;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ====== HEADER ====== */
+  .header {
+    background: linear-gradient(135deg, #051426 0%, #0a1929 50%, #08385e 100%);
+    padding: 28px 40px 24px;
+    border-bottom: 1px solid var(--linha);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  .header h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    color: var(--ink);
+  }
+  .header h1 em {
+    color: var(--verde);
+    font-style: italic;
+  }
+  .header .sub {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin-top: 6px;
+    max-width: 720px;
+  }
+  .header-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(61,217,168,.12);
+    border: 1px solid var(--verde-escuro);
+    color: var(--verde);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-radius: 24px;
+    margin-bottom: 10px;
+  }
+  .header-stats {
+    display: flex;
+    gap: 28px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--linha);
+  }
+  .header-stat .v {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    color: var(--verde);
+    line-height: 1;
+    font-weight: 500;
+  }
+  .header-stat .l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-top: 6px;
+  }
+
+  /* ====== TABS ====== */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-top: 22px;
+  }
+  .tab {
+    padding: 9px 18px;
+    background: transparent;
+    border: 1px solid var(--linha);
+    border-bottom: none;
+    color: var(--ink-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 6px 6px 0 0;
+    transition: all .2s;
+    position: relative;
+    bottom: -1px;
+  }
+  .tab:hover { color: var(--ink-soft); border-color: var(--linha-forte); }
+  .tab.active {
+    color: var(--verde);
+    background: var(--bg);
+    border-color: var(--verde-escuro);
+    border-bottom: 1px solid var(--bg);
+  }
+
+  /* ====== CONTAINER ====== */
+  .container {
+    padding: 32px 40px 60px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* ====== SECCAO ====== */
+  .seccao-titulo {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    color: var(--ink);
+    margin: 32px 0 18px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .seccao-titulo::before {
+    content: '';
+    width: 4px; height: 24px;
+    background: linear-gradient(180deg, var(--verde), var(--azul));
+    border-radius: 2px;
+  }
+  .seccao-titulo em { color: var(--verde); font-style: italic; }
+
+  /* ====== KPI GRID ====== */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 720px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+  .kpi-card {
+    background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-card-2) 100%);
+    border: 1px solid var(--linha);
+    border-radius: 8px;
+    padding: 18px 18px 16px;
+    position: relative;
+    overflow: hidden;
+    transition: all .3s;
+  }
+  .kpi-card:hover {
+    border-color: var(--verde-escuro);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--verde), var(--azul));
+  }
+  .kpi-card.eixo-clinico::before { background: linear-gradient(90deg, var(--verde), var(--verde-escuro)); }
+  .kpi-card.eixo-acesso::before { background: linear-gradient(90deg, var(--azul), var(--azul-escuro)); }
+  .kpi-card.eixo-eficiencia::before { background: linear-gradient(90deg, var(--acento), #e09921); }
+  .kpi-card.eixo-experiencia::before { background: linear-gradient(90deg, #b873e8, #7b3fd6); }
+
+  .kpi-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .kpi-num {
+    width: 28px; height: 28px;
+    background: var(--bg);
+    border: 1.5px solid var(--verde-escuro);
+    color: var(--verde);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .kpi-eixo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 3px 9px;
+    border: 1px solid var(--linha);
+    border-radius: 12px;
+  }
+  .kpi-eixo.clinico { color: var(--verde); border-color: var(--verde-escuro); }
+  .kpi-eixo.acesso { color: var(--azul); border-color: var(--azul-escuro); }
+  .kpi-eixo.eficiencia { color: var(--acento); border-color: #c9a227; }
+  .kpi-eixo.experiencia { color: #d4a0f5; border-color: #7b3fd6; }
+
+  .kpi-titulo {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    color: var(--ink);
+    line-height: 1.2;
+    margin-bottom: 6px;
+    font-weight: 500;
+    min-height: 38px;
+  }
+  .kpi-metrica {
+    font-size: 11px;
+    color: var(--ink-soft);
+    line-height: 1.45;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--linha);
+    min-height: 50px;
+  }
+
+  .kpi-valores {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .kpi-valor {
+    background: rgba(255,255,255,.02);
+    border-radius: 4px;
+    padding: 8px;
+    text-align: center;
+  }
+  .kpi-valor.atual {
+    border-left: 2px solid var(--ink-dim);
+  }
+  .kpi-valor.m26 {
+    border-left: 2px solid var(--verde);
+    background: rgba(61,217,168,.06);
+  }
+  .kpi-valor.m27 {
+    border-left: 2px solid var(--acento);
+    background: rgba(245,215,110,.06);
+  }
+  .kpi-valor .ano {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    color: var(--ink-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .kpi-valor .v {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    color: var(--ink);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .kpi-valor.m26 .v { color: var(--verde); }
+  .kpi-valor.m27 .v { color: var(--acento); }
+  .kpi-valor .unit {
+    font-size: 9px;
+    color: var(--ink-dim);
+    margin-top: 3px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .kpi-objetivo {
+    background: rgba(29,111,184,.1);
+    border-left: 2px solid var(--azul);
+    padding: 8px 10px;
+    border-radius: 0 4px 4px 0;
+    font-size: 10.5px;
+    line-height: 1.45;
+  }
+  .kpi-objetivo strong { color: var(--azul); }
+
+  /* ====== PLANO DE AÇÃO ====== */
+  .plano-card {
+    background: var(--bg-card);
+    border: 1px solid var(--linha);
+    border-radius: 8px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .plano-head {
+    background: linear-gradient(90deg, rgba(19,169,129,.15), transparent);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid var(--linha);
+    cursor: pointer;
+    user-select: none;
+    transition: background .2s;
+  }
+  .plano-head:hover { background: linear-gradient(90deg, rgba(19,169,129,.25), transparent); }
+  .plano-num {
+    width: 32px; height: 32px;
+    background: var(--verde-escuro);
+    color: white;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .plano-titulo {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    color: var(--ink);
+    font-weight: 500;
+    flex: 1;
+  }
+  .plano-toggle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--verde);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .plano-corpo {
+    padding: 0;
+    max-height: 1500px;
+    overflow: hidden;
+    transition: max-height .4s ease;
+  }
+  .plano-card.fechado .plano-corpo { max-height: 0; }
+  .plano-card.fechado .plano-toggle::after { content: ' +'; }
+  .plano-card:not(.fechado) .plano-toggle::after { content: ' −'; }
+
+  .acoes-tabela {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .acoes-tabela th {
+    background: rgba(255,255,255,.02);
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--verde);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    border-bottom: 1px solid var(--linha);
+  }
+  .acoes-tabela td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--linha);
+    vertical-align: top;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.45;
+  }
+  .acoes-tabela tr:last-child td { border-bottom: none; }
+  .acoes-tabela td.acao { color: var(--ink); }
+  .acoes-tabela td.metrica { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--verde); }
+  .acoes-tabela td.resp {
+    font-size: 11px;
+  }
+  .badge-resp {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-right: 3px;
+    margin-bottom: 2px;
+  }
+  .b-csp { background: rgba(58,160,232,.15); color: var(--azul); border: 1px solid var(--azul-escuro); }
+  .b-ch { background: rgba(61,217,168,.15); color: var(--verde); border: 1px solid var(--verde-escuro); }
+  .b-um { background: rgba(245,215,110,.15); color: var(--acento); border: 1px solid #c9a227; }
+  .b-coord { background: rgba(184,115,232,.15); color: #d4a0f5; border: 1px solid #7b3fd6; }
+  .badge-prazo {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(255,255,255,.05);
+    color: var(--ink-soft);
+    border: 1px solid var(--linha);
+  }
+
+  /* ====== RESUMO BAR ====== */
+  .resumo-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--linha);
+    border-radius: 8px;
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    align-items: center;
+  }
+  .resumo-eixo {
+    border-left: 3px solid var(--linha);
+    padding-left: 14px;
+  }
+  .resumo-eixo.clinico { border-left-color: var(--verde); }
+  .resumo-eixo.acesso { border-left-color: var(--azul); }
+  .resumo-eixo.eficiencia { border-left-color: var(--acento); }
+  .resumo-eixo.experiencia { border-left-color: #b873e8; }
+  .resumo-eixo .nome {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .resumo-eixo .desc {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    color: var(--ink);
+    margin-bottom: 2px;
+    font-weight: 500;
+  }
+  .resumo-eixo .cont {
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .resumo-eixo .cont strong { color: var(--ink); }
+
+  /* ====== TAB CONTENT ====== */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadein .35s ease; }
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ====== CHART CONTAINER ====== */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+  .chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--linha);
+    border-radius: 8px;
+    padding: 18px 20px;
+  }
+  .chart-card h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 280px;
+  }
+
+  /* ====== FOOTER ====== */
+  .footer {
+    border-top: 1px solid var(--linha);
+    padding: 24px 40px;
+    color: var(--ink-dim);
+    font-size: 11px;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .footer strong { color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <span class="header-badge">PAI-IC · Dashboard de Monitorização</span>
+      <h1>15 indicadores. <em>Duas metas.</em> Uma trajetória.</h1>
+      <p class="sub">Painel de KPIs e plano de ação operacional para o Percurso Assistencial Integrado do Doente com Insuficiência Cardíaca · ULS Loures-Odivelas · 2026–2027 · <strong>Referencial clínico atualizado às 2026 ESC Guidelines</strong> · <strong>Fase piloto: 56 utentes com IC da USF da Ramada</strong></p>
+    </div>
+  </div>
+
+  <div class="header-stats">
+    <div class="header-stat"><div class="v">2 470</div><div class="l">Utentes ULSLO 2024</div></div>
+    <div class="header-stat"><div class="v">15</div><div class="l">Indicadores</div></div>
+    <div class="header-stat"><div class="v">26</div><div class="l">Ações operacionais</div></div>
+    <div class="header-stat"><div class="v">5</div><div class="l">Eixos estratégicos</div></div>
+    <div class="header-stat"><div class="v">€12,99M</div><div class="l">Custo 2024 a otimizar</div></div>
+    <div class="header-stat"><div class="v" style="color:#f5d76e">56</div><div class="l">Utentes · piloto USF da Ramada</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('kpis', this)">01 · KPIs &amp; Metas</button>
+    <button class="tab" onclick="switchTab('plano', this)">02 · Plano de Ação</button>
+    <button class="tab" onclick="switchTab('progresso', this)">03 · Visão Global</button>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ================== TAB 1: KPIs ================== -->
+<div class="tab-content active" id="tab-kpis">
+
+  <div class="resumo-bar">
+    <div class="resumo-eixo clinico">
+      <div class="nome">Eixo 01 · Clínico</div>
+      <div class="desc">Resultados em saúde</div>
+      <div class="cont"><strong>4 indicadores</strong> · Mortalidade, hospitalizações, polimedicação, prescrição</div>
+    </div>
+    <div class="resumo-eixo acesso">
+      <div class="nome">Eixo 02 · Acesso &amp; Articulação</div>
+      <div class="desc">Continuidade de cuidados</div>
+      <div class="cont"><strong>4 indicadores</strong> · Diagnóstico, CSP, articulação, alta</div>
+    </div>
+    <div class="resumo-eixo eficiencia">
+      <div class="nome">Eixo 03 · Eficiência</div>
+      <div class="desc">Utilização de recursos</div>
+      <div class="cont"><strong>2 indicadores</strong> · Contactos, hiper-frequentadores</div>
+    </div>
+    <div class="resumo-eixo experiencia">
+      <div class="nome">Eixo 04 · Pessoa</div>
+      <div class="desc">Cuidados centrados</div>
+      <div class="cont"><strong>2 indicadores</strong> · Identificação, PIC ativo</div>
+    </div>
+    <div class="resumo-eixo experiencia">
+      <div class="nome">Eixo 05 · Experiência e Valor</div>
+      <div class="desc">Resultados reportados pela pessoa</div>
+      <div class="cont"><strong>3 indicadores</strong> · PROM-IC (KCCQ-12), PACIC-PT, QALYs</div>
+    </div>
+  </div>
+
+  <h2 class="seccao-titulo">Eixo <em>Clínico</em> · resultados em saúde</h2>
+
+  <div class="kpi-grid">
+
+    <!-- KPI 12: Internamento descompensação (eixo clínico) -->
+    <div class="kpi-card eixo-clinico">
+      <div class="kpi-head">
+        <div class="kpi-num">12</div>
+        <div class="kpi-eixo clinico">Clínico · Outcome</div>
+      </div>
+      <h3 class="kpi-titulo">Eficácia da gestão clínica</h3>
+      <div class="kpi-metrica">Nº utentes com internamento por descompensação IC ÷ total utentes IC</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">2024</div><div class="v">41,4%</div><div class="unit">1 022 utentes</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">−10%</div><div class="unit">≈ 37,3%</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">−15%</div><div class="unit">≈ 35,2%</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Reduzir internamentos por descompensação em linha com o benchmark UpHill/Karolinska (IRR 0,71)</div>
+    </div>
+
+    <!-- KPI 5: Risco internamento -->
+    <div class="kpi-card eixo-clinico">
+      <div class="kpi-head">
+        <div class="kpi-num">05</div>
+        <div class="kpi-eixo clinico">Clínico · Risco</div>
+      </div>
+      <h3 class="kpi-titulo">Risco de internamento &gt; 50%</h3>
+      <div class="kpi-metrica">Utentes com probabilidade de internamento &gt; 50% a 6 meses e a 12 meses</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">2024 · 6m</div><div class="v">18</div><div class="unit">12m: 155</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">−5%</div><div class="unit">17 / 147</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">−10%</div><div class="unit">16 / 140</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Telemonitorização proactiva dos 155 utentes de alto risco identificados nominalmente</div>
+    </div>
+
+    <!-- KPI 4: Polimedicação -->
+    <div class="kpi-card eixo-clinico">
+      <div class="kpi-head">
+        <div class="kpi-num">04</div>
+        <div class="kpi-eixo clinico">Clínico · Segurança</div>
+      </div>
+      <h3 class="kpi-titulo">Polimedicação (≥ 10 fármacos)</h3>
+      <div class="kpi-metrica">Nº utentes polimedicados + custo médio e total com medicamentos polimedicados</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">2024</div><div class="v">1 816</div><div class="unit">73,5% · €2,7M</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">−5%</div><div class="unit">1 725 · €2,57M</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">−10%</div><div class="unit">1 634 · €2,43M</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> STOPP/START + reconciliação terapêutica pela Farmácia Hospitalar</div>
+    </div>
+
+    <!-- KPI 10: Prescrição IC-FEr -->
+    <div class="kpi-card eixo-clinico">
+      <div class="kpi-head">
+        <div class="kpi-num">10</div>
+        <div class="kpi-eixo clinico">Clínico · Terapêutica</div>
+      </div>
+      <h3 class="kpi-titulo">Adequação da terapêutica fundamental (FMT · ESC 2026)</h3>
+      <div class="kpi-metrica">IC-FEr (FEVE &lt;50%): utentes com os 4 pilares (IECA/ARNI/ARA II + BB + ARM + iSGLT2) ÷ total IC-FEr · IC-FEp (FEVE ≥50%): utentes com ARM + iSGLT2 ÷ total IC-FEp</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">Baseline</div><div class="v">n/d</div><div class="unit">a apurar 2026</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">50%</div><div class="unit">IC-FEr · IC-FEp</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">70%</div><div class="unit">IC-FEr · IC-FEp</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Início conjunto e titulação da FMT a cada 1–2 semanas até dose-alvo (ESC 2026, Classe I) · FMT iniciada/otimizada no internamento e nas 6 semanas pós-alta · GLP-1 RA na IC-FEp com IMC ≥30 (IIa)</div>
+    </div>
+
+  </div>
+
+  <h2 class="seccao-titulo">Eixo <em>Acesso e Articulação</em> · continuidade de cuidados</h2>
+
+  <div class="kpi-grid">
+
+    <!-- KPI 6: Diagnóstico estruturado -->
+    <div class="kpi-card eixo-acesso">
+      <div class="kpi-head">
+        <div class="kpi-num">06</div>
+        <div class="kpi-eixo acesso">Acesso · Diagnóstico</div>
+      </div>
+      <h3 class="kpi-titulo">Acesso ao diagnóstico estruturado</h3>
+      <div class="kpi-metrica">Utentes com NT-proBNP (limiar ajustado à idade: ≥125 &lt;50 a · ≥250 50–74 a · ≥500 ≥75 a) + ecocardiograma com FEVE ÷ total com suspeita de IC</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">Baseline</div><div class="v">n/d</div><div class="unit">a apurar 2026</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">−10%</div><div class="unit">vs. baseline</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">−15%</div><div class="unit">vs. baseline</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Algoritmo diagnóstico ESC 2026 (Fig. 4) sistemático nos CSP e CH · 2 fenótipos (IC-FEr &lt;50% · IC-FEp ≥50%) · eco ≤2 semanas se NT-proBNP &gt;2000</div>
+    </div>
+
+    <!-- KPI 7: Acesso CSP -->
+    <div class="kpi-card eixo-acesso">
+      <div class="kpi-head">
+        <div class="kpi-num">07</div>
+        <div class="kpi-eixo acesso">Acesso · CSP</div>
+      </div>
+      <h3 class="kpi-titulo">Acesso aos Cuidados de Saúde Primários</h3>
+      <div class="kpi-metrica">Utentes com IC e consulta CSP no ano ÷ total utentes com IC</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">2024</div><div class="v">90,8%</div><div class="unit">2 242 utentes</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">95%</div><div class="unit">≈ 2 346 utentes</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">97%</div><div class="unit">≈ 2 396 utentes</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Agendamento automático IC-CSP estável (via SPMS) + alcançar NUR 2-4 sem MGF</div>
+    </div>
+
+    <!-- KPI 8: Articulação CSP-CH -->
+    <div class="kpi-card eixo-acesso">
+      <div class="kpi-head">
+        <div class="kpi-num">08</div>
+        <div class="kpi-eixo acesso">Acesso · Articulação</div>
+      </div>
+      <h3 class="kpi-titulo">Articulação entre níveis de cuidados</h3>
+      <div class="kpi-metrica">Tempo médio (dias) entre referenciação para Consulta IC (MI/Cardiologia) e realização da consulta</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">Baseline</div><div class="v">n/d</div><div class="unit">a apurar 2026</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">≤ 60d</div><div class="unit">consulta IC</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">≤ 30d</div><div class="unit">consulta IC</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Teleconsulta/Videoconsulta CSP–CH + dashboard partilhado em tempo real</div>
+    </div>
+
+    <!-- KPI 9: Continuidade pós-alta -->
+    <div class="kpi-card eixo-acesso">
+      <div class="kpi-head">
+        <div class="kpi-num">09</div>
+        <div class="kpi-eixo acesso">Acesso · Pós-alta</div>
+      </div>
+      <h3 class="kpi-titulo">Continuidade de cuidados pós-alta</h3>
+      <div class="kpi-metrica">Tempo médio (dias) entre alta de internamento hospitalar e reavaliação pelos CSP</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">Baseline</div><div class="v">n/d</div><div class="unit">a apurar 2026</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">≤ 30d</div><div class="unit">reaval. CSP</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">≤ 14d</div><div class="unit">reaval. CSP</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Envio automático da Nota de Alta via RSE-SIGA · janela crítica das 2 semanas</div>
+    </div>
+
+  </div>
+
+  <h2 class="seccao-titulo">Eixo <em>Eficiência</em> · utilização de recursos</h2>
+
+  <div class="kpi-grid">
+
+    <!-- KPI 2: Contactos -->
+    <div class="kpi-card eixo-eficiencia">
+      <div class="kpi-head">
+        <div class="kpi-num">02</div>
+        <div class="kpi-eixo eficiencia">Eficiência · Contactos</div>
+      </div>
+      <h3 class="kpi-titulo">Contactos por utente / ano</h3>
+      <div class="kpi-metrica">Número médio de episódios (CSP + hospitalares) por utente no PAI</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">2024</div><div class="v">19,0</div><div class="unit">contactos</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">−5%</div><div class="unit">≈ 18,1</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">−10%</div><div class="unit">≈ 17,1</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Plano Individual de Cuidados (PIC) com contactos programados (médico/enfermeiro)</div>
+    </div>
+
+    <!-- KPI 3: Hiper-frequentadores -->
+    <div class="kpi-card eixo-eficiencia">
+      <div class="kpi-head">
+        <div class="kpi-num">03</div>
+        <div class="kpi-eixo eficiencia">Eficiência · Urgência</div>
+      </div>
+      <h3 class="kpi-titulo">Hiper-frequentadores do SU</h3>
+      <div class="kpi-metrica">Nº utentes com ≥ 5 urgências/ano + nº total e médio de urgências destes</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">2024</div><div class="v">169</div><div class="unit">1 248 episódios</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">−10%</div><div class="unit">152 / 1 123</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">−15%</div><div class="unit">144 / 1 061</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Telemonitorização + plano de ajuste flexível de diuréticos no domicílio</div>
+    </div>
+
+  </div>
+
+  <h2 class="seccao-titulo">Eixo <em>Pessoa</em> · cuidados centrados</h2>
+
+  <div class="kpi-grid">
+
+    <!-- KPI 1: Identificação -->
+    <div class="kpi-card eixo-experiencia">
+      <div class="kpi-head">
+        <div class="kpi-num">01</div>
+        <div class="kpi-eixo experiencia">Pessoa · Identificação</div>
+      </div>
+      <h3 class="kpi-titulo">Identificação correta dos utentes PAI</h3>
+      <div class="kpi-metrica">Nº utentes incluídos no PAI conforme critérios + % face ao total ULSLO</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">2024</div><div class="v">2 470</div><div class="unit">1,1% inscritos</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">+5%</div><div class="unit">≈ 2 594</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">+10%</div><div class="unit">≈ 2 717</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Aproximar codificação real da prevalência PORTHOS (16,5% nos 50+ anos)</div>
+    </div>
+
+    <!-- KPI 11: PIC ativo -->
+    <div class="kpi-card eixo-experiencia">
+      <div class="kpi-head">
+        <div class="kpi-num">11</div>
+        <div class="kpi-eixo experiencia">Pessoa · PIC</div>
+      </div>
+      <h3 class="kpi-titulo">Abordagem centrada na pessoa</h3>
+      <div class="kpi-metrica">Nº utentes com Plano Individual de Cuidados (PIC) ativo ÷ total utentes com IC</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">Baseline</div><div class="v">0%</div><div class="unit">PIC novo</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">25%</div><div class="unit">≈ 618 utentes</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">50%</div><div class="unit">≈ 1 235 utentes</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Cobrir progressivamente 1 235 utentes (50% do PAI) com PIC ativo até 2027</div>
+    </div>
+
+  </div>
+
+  <h2 class="seccao-titulo">Eixo <em>Experiência e Valor</em> · resultados reportados pela pessoa</h2>
+
+  <div class="kpi-grid">
+
+    <!-- KPI 13: PROM-IC · KCCQ-12 -->
+    <div class="kpi-card eixo-experiencia">
+      <div class="kpi-head">
+        <div class="kpi-num">13</div>
+        <div class="kpi-eixo experiencia">Experiência · PROM</div>
+      </div>
+      <h3 class="kpi-titulo">PROM-IC · resposta clínica (KCCQ-12)</h3>
+      <div class="kpi-metrica">% utentes com variação do KCCQ-12 ≥ MCID (+5 pontos) aos 6 meses · resposta substancial ≥ SCB (+10) · deterioração ≤ −5</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">Baseline</div><div class="v">n/d</div><div class="unit">a apurar 2026</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">≥40%</div><div class="unit">Δ ≥ MCID</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">≥60%</div><div class="unit">Δ ≥ MCID</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> KCCQ-12 anual; ≥25% (2026) / ≥40% (2027) com resposta substancial SCB (+10); deterioração ≤15% / ≤10%. Queda ≥5 = preditor de hospitalização</div>
+    </div>
+
+    <!-- KPI 14: Experiência integrada · PACIC-PT -->
+    <div class="kpi-card eixo-experiencia">
+      <div class="kpi-head">
+        <div class="kpi-num">14</div>
+        <div class="kpi-eixo experiencia">Experiência · PREM</div>
+      </div>
+      <h3 class="kpi-titulo">Experiência integrada de cuidados (PACIC-PT)</h3>
+      <div class="kpi-metrica">Score médio do PACIC-PT (Patient Assessment of Chronic Illness Care, escala 1-5), aplicado anualmente</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">Baseline</div><div class="v">n/d</div><div class="unit">a apurar 2026</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">≥3,5</div><div class="unit">PASS</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">≥4,0</div><div class="unit">excelência</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Medir a integração percebida CSP-CH-UMR; complementado pelo Net Care Health Score trimestral e CollaboRATE pontual</div>
+    </div>
+
+    <!-- KPI 15: QALYs ganhos · EQ-5D-5L -->
+    <div class="kpi-card eixo-experiencia">
+      <div class="kpi-head">
+        <div class="kpi-num">15</div>
+        <div class="kpi-eixo experiencia">Experiência · Valor</div>
+      </div>
+      <h3 class="kpi-titulo">QALYs ganhos (EQ-5D-5L)</h3>
+      <div class="kpi-metrica">Ganho médio de anos de vida ajustados pela qualidade (QALY) por doente e por ano, a partir do EQ-5D-5L semestral</div>
+      <div class="kpi-valores">
+        <div class="kpi-valor atual"><div class="ano">Baseline</div><div class="v">n/d</div><div class="unit">a apurar 2026</div></div>
+        <div class="kpi-valor m26"><div class="ano">Meta 2026</div><div class="v">+0,05</div><div class="unit">QALY/ano</div></div>
+        <div class="kpi-valor m27"><div class="ano">Meta 2027</div><div class="v">+0,10</div><div class="unit">QALY/ano</div></div>
+      </div>
+      <div class="kpi-objetivo"><strong>Objetivo específico:</strong> Permitir o cálculo do custo por QALY ganho, alinhado com o benchmark UpHill/Karolinska (€508/QALY)</div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ================== TAB 2: PLANO DE AÇÃO ================== -->
+<div class="tab-content" id="tab-plano">
+
+  <div style="background: rgba(245,215,110,.08); border: 1px solid #c9a227; border-radius: 8px; padding: 18px 22px; margin-bottom: 24px;">
+    <div style="font-family: 'Fraunces', serif; font-size: 17px; color: var(--acento); margin-bottom: 6px; font-weight: 500;">Como ler este plano</div>
+    <p style="font-size: 13px; color: var(--ink-soft); line-height: 1.55;">
+      Cada um dos 12 objetivos tem ações operacionais associadas, com identificação de <strong style="color:var(--ink);">responsáveis</strong> (CSP, Cuidados Hospitalares, UMR, Coordenação), <strong style="color:var(--ink);">prazo de execução</strong> e <strong style="color:var(--ink);">métrica de acompanhamento</strong>. Os cartões abrem e fecham — clique no cabeçalho.
+    </p>
+  </div>
+
+  <!-- Card 1 -->
+  <div class="plano-card">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">01</div>
+      <div class="plano-titulo">Garantir a identificação correta dos utentes com critérios para inclusão no PAI</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Formações para promover o registo dos diagnósticos nos momentos de contacto do utente com CSP e hospital</td>
+            <td class="resp"><span class="badge-resp b-coord">Coord.</span><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q1 2026</span></td>
+            <td class="metrica">Nº formações realizadas</td>
+          </tr>
+          <tr>
+            <td class="acao">Reuniões mensais CSP–CH para validação de candidatos ao PAI</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Contínuo</span></td>
+            <td class="metrica">Nº reuniões realizadas</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 2 -->
+  <div class="plano-card fechado">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">02</div>
+      <div class="plano-titulo">Reduzir o número médio de contactos através do Plano Individual de Cuidados (PIC)</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Criar PIC para os utentes incluídos no PAI — com definição de contactos programados (médico/enfermeiro), metas de autocuidado e revisão periódica</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span><span class="badge-resp b-um">UMR</span></td>
+            <td><span class="badge-prazo">Q2 2026</span></td>
+            <td class="metrica">Nº utentes com PIC</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 3 -->
+  <div class="plano-card fechado">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">03</div>
+      <div class="plano-titulo">Reduzir o número de episódios de urgência dos hiper-frequentadores</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Análise individualizada dos utentes com ≥ 5 urgências por unidade funcional</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q1 2026</span></td>
+            <td class="metrica">Nº utentes avaliados</td>
+          </tr>
+          <tr>
+            <td class="acao">Telemonitorização destes utentes através da Unidade de Monitorização Remota</td>
+            <td class="resp"><span class="badge-resp b-um">UMR</span></td>
+            <td><span class="badge-prazo">Q2 2026</span></td>
+            <td class="metrica">Nº hiper-frequentadores telemonitorizados</td>
+          </tr>
+          <tr>
+            <td class="acao">Implementar Plano de ajuste flexível de diuréticos no domicílio</td>
+            <td class="resp"><span class="badge-resp b-ch">CH</span><span class="badge-resp b-csp">CSP</span></td>
+            <td><span class="badge-prazo">Q2-Q3 2026</span></td>
+            <td class="metrica">Nº utentes com plano ajuste flexível</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 4 -->
+  <div class="plano-card fechado">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">04</div>
+      <div class="plano-titulo">Reduzir a polimedicação (utentes com +10 medicamentos)</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Análise individualizada dos utentes com ≥ 10 medicamentos</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q1-Q2 2026</span></td>
+            <td class="metrica">Nº utentes avaliados</td>
+          </tr>
+          <tr>
+            <td class="acao">Aplicação dos critérios STOPP/START em CSP e CH</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Contínuo</span></td>
+            <td class="metrica">% utentes com revisão STOPP/START documentada</td>
+          </tr>
+          <tr>
+            <td class="acao">Protocolo com Farmácia Hospitalar para reconciliação terapêutica</td>
+            <td class="resp"><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q2 2026</span></td>
+            <td class="metrica">Nº utentes avaliados pela Farmácia Hospitalar</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 5 -->
+  <div class="plano-card fechado">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">05</div>
+      <div class="plano-titulo">Gestão de utentes com risco de internamento &gt; 50% (6m e 12m)</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Análise individualizada dos utentes com probabilidade de internamento &gt; 50% a 6 meses (18 utentes)</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q1 2026</span></td>
+            <td class="metrica">Nº utentes avaliados</td>
+          </tr>
+          <tr>
+            <td class="acao">Análise individualizada dos utentes com probabilidade de internamento &gt; 50% a 12 meses (155 utentes)</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q1-Q2 2026</span></td>
+            <td class="metrica">Nº utentes avaliados</td>
+          </tr>
+          <tr>
+            <td class="acao">Telemonitorização dos utentes de alto risco através da UMR</td>
+            <td class="resp"><span class="badge-resp b-um">UMR</span></td>
+            <td><span class="badge-prazo">Q2 2026</span></td>
+            <td class="metrica">Nº utentes alto risco telemonitorizados</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 6 -->
+  <div class="plano-card fechado">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">06</div>
+      <div class="plano-titulo">Avaliar o acesso ao diagnóstico estruturado</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Formações para promover o diagnóstico clínico estruturado (algoritmo ESC 2026 · NT-proBNP ajustado à idade · 2 fenótipos)</td>
+            <td class="resp"><span class="badge-resp b-coord">Coord.</span><span class="badge-resp b-csp">CSP</span></td>
+            <td><span class="badge-prazo">Q1 2026</span></td>
+            <td class="metrica">Nº formações realizadas</td>
+          </tr>
+          <tr>
+            <td class="acao">Protocolo de acesso a péptidos natriuréticos (NT-proBNP) nos CSP</td>
+            <td class="resp"><span class="badge-resp b-coord">Coord.</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q2 2026</span></td>
+            <td class="metrica">% utentes IC novos com NT-proBNP realizado</td>
+          </tr>
+          <tr>
+            <td class="acao">Circuito acelerado para Ecocardiograma transtorácico em suspeita IC</td>
+            <td class="resp"><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q2-Q3 2026</span></td>
+            <td class="metrica">Tempo médio de espera para EcoTT (dias)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 7 -->
+  <div class="plano-card fechado">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">07</div>
+      <div class="plano-titulo">Avaliar o acesso aos Cuidados de Saúde Primários</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Promover o agendamento automático do doente IC estável no domicílio CSP de acordo com PAI-IC (discussão prévia com SPMS)</td>
+            <td class="resp"><span class="badge-resp b-coord">Coord.</span><span class="badge-resp b-csp">CSP</span></td>
+            <td><span class="badge-prazo">Q3 2026</span></td>
+            <td class="metrica">Nº agendamentos automáticos consulta IC-CSP</td>
+          </tr>
+          <tr>
+            <td class="acao">Identificação ativa dos 108 utentes NUR 2-4 sem consulta MGF para inclusão prioritária</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span></td>
+            <td><span class="badge-prazo">Q1 2026</span></td>
+            <td class="metrica">Nº utentes NUR 2-4 com consulta MGF agendada</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 8 -->
+  <div class="plano-card fechado">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">08</div>
+      <div class="plano-titulo">Monitorizar a articulação entre níveis de cuidados</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Promover protocolos específicos para Teleconsulta/Videoconsulta CSP–CH</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q2 2026</span></td>
+            <td class="metrica">Nº teleconsultas/videoconsultas ÷ total consultas</td>
+          </tr>
+          <tr>
+            <td class="acao">Implementar dashboard partilhado CSP–CH com indicadores em tempo real</td>
+            <td class="resp"><span class="badge-resp b-coord">Coord.</span></td>
+            <td><span class="badge-prazo">Q3 2026</span></td>
+            <td class="metrica">Dashboard operacional · % unidades com acesso</td>
+          </tr>
+          <tr>
+            <td class="acao">Canal MS Teams dedicado à discussão clínica CSP–CH</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q1 2026</span></td>
+            <td class="metrica">Nº casos discutidos / mês</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 9 -->
+  <div class="plano-card fechado">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">09</div>
+      <div class="plano-titulo">Avaliar a continuidade de cuidados pós-alta</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Envio automático da Nota de Alta via RSE-SIGA para a USF de inscrição</td>
+            <td class="resp"><span class="badge-resp b-ch">CH</span><span class="badge-resp b-coord">Coord.</span></td>
+            <td><span class="badge-prazo">Q2 2026</span></td>
+            <td class="metrica">% notas de alta enviadas automaticamente em 24h</td>
+          </tr>
+          <tr>
+            <td class="acao">Implementação da Checklist pré-alta (Bettencourt et al., 2021) no Internamento 3.2</td>
+            <td class="resp"><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q1 2026</span></td>
+            <td class="metrica">% altas por IC com checklist preenchida</td>
+          </tr>
+          <tr>
+            <td class="acao">Equipa de Transição: contacto telefónico do enfermeiro de ligação nos primeiros 7 dias pós-alta</td>
+            <td class="resp"><span class="badge-resp b-ch">CH</span><span class="badge-resp b-um">UMR</span></td>
+            <td><span class="badge-prazo">Q2 2026</span></td>
+            <td class="metrica">% altas com contacto telefónico em ≤ 7 dias</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 10 -->
+  <div class="plano-card fechado">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">10</div>
+      <div class="plano-titulo">Avaliar a adequação da terapêutica fundamental (FMT · IC-FEr e IC-FEp · ESC 2026)</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Análise individualizada dos utentes IC-FEr com prescrição dos 4 fármacos modificadores (IECA/ARA II/ARNI + BB + ARM + iSGLT2)</td>
+            <td class="resp"><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q1-Q2 2026</span></td>
+            <td class="metrica">Nº utentes avaliados · % com 4 pilares</td>
+          </tr>
+          <tr>
+            <td class="acao">Análise individualizada dos utentes IC-FEp (FEVE ≥50%) com prescrição de ARM + iSGLT2 (Classe I A)</td>
+            <td class="resp"><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q2 2026</span></td>
+            <td class="metrica">Nº utentes avaliados · % com iSGLT2</td>
+          </tr>
+          <tr>
+            <td class="acao">Titulação progressiva no Hospital de Dia até dose-alvo (ou máxima tolerada)</td>
+            <td class="resp"><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Contínuo</span></td>
+            <td class="metrica">% utentes em dose-alvo de cada pilar</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 11 -->
+  <div class="plano-card fechado">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">11</div>
+      <div class="plano-titulo">Medir a abordagem centrada na pessoa</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Criar PIC para os utentes do PAI — contactos programados, metas de autocuidado, sinais de alarme, revisão periódica</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span><span class="badge-resp b-um">UMR</span></td>
+            <td><span class="badge-prazo">Q2 2026</span></td>
+            <td class="metrica">Nº utentes com PIC ativo</td>
+          </tr>
+          <tr>
+            <td class="acao">Distribuição dos 1 500 folhetos educativos (sistema semáforo + tabela de peso)</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Q2 2026</span></td>
+            <td class="metrica">Nº folhetos entregues · % utentes do PAI</td>
+          </tr>
+          <tr>
+            <td class="acao">Recolha de PROMs (medidas reportadas pelo doente) — KCCQ-12 anual</td>
+            <td class="resp"><span class="badge-resp b-ch">CH</span><span class="badge-resp b-um">UMR</span></td>
+            <td><span class="badge-prazo">Q4 2026</span></td>
+            <td class="metrica">% utentes com KCCQ-12 anual registado</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Card 12 -->
+  <div class="plano-card fechado">
+    <div class="plano-head" onclick="toggleCard(this)">
+      <div class="plano-num">12</div>
+      <div class="plano-titulo">Avaliar a eficácia da gestão clínica</div>
+      <div class="plano-toggle">Ações</div>
+    </div>
+    <div class="plano-corpo">
+      <table class="acoes-tabela">
+        <thead><tr><th style="width:40%;">Ação</th><th style="width:18%;">Responsáveis</th><th style="width:12%;">Prazo</th><th style="width:30%;">Métrica de acompanhamento</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="acao">Implementação da Teleconsulta/Videoconsulta + Plano de ajuste flexível de diuréticos</td>
+            <td class="resp"><span class="badge-resp b-ch">CH</span><span class="badge-resp b-um">UMR</span></td>
+            <td><span class="badge-prazo">Q2-Q3 2026</span></td>
+            <td class="metrica">Nº teleconsultas ÷ total consultas</td>
+          </tr>
+          <tr>
+            <td class="acao">Monitorização mensal da taxa de internamentos por descompensação IC</td>
+            <td class="resp"><span class="badge-resp b-coord">Coord.</span></td>
+            <td><span class="badge-prazo">Contínuo</span></td>
+            <td class="metrica">% utentes IC com internamento por descompensação</td>
+          </tr>
+          <tr>
+            <td class="acao">Revisões interpares quinzenais de casos críticos e eventos adversos</td>
+            <td class="resp"><span class="badge-resp b-csp">CSP</span><span class="badge-resp b-ch">CH</span></td>
+            <td><span class="badge-prazo">Contínuo</span></td>
+            <td class="metrica">Nº casos discutidos · ações corretivas</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================== TAB 3: VISÃO GLOBAL ================== -->
+<div class="tab-content" id="tab-progresso">
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h4>Distribuição de KPIs por eixo estratégico</h4>
+      <div class="chart-wrap"><canvas id="chartEixos"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h4>Trajetória das metas — valor relativo (2024 → 2027)</h4>
+      <div class="chart-wrap"><canvas id="chartTrajetoria"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom: 24px;">
+    <h4>Mapa de redução esperada · 2024 → 2026 → 2027</h4>
+    <div class="chart-wrap" style="height: 380px;"><canvas id="chartRedu"></canvas></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h4>Distribuição de ações por responsável (26 ações)</h4>
+      <div class="chart-wrap"><canvas id="chartResp"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h4>Cronograma das ações em 2026</h4>
+      <div class="chart-wrap"><canvas id="chartPrazo"></canvas></div>
+    </div>
+  </div>
+
+  <div style="background: linear-gradient(135deg, rgba(19,169,129,.1), rgba(29,111,184,.08)); border-left: 3px solid var(--verde); padding: 22px 26px; border-radius: 0 8px 8px 0; margin-top: 24px;">
+    <div style="font-family: 'Fraunces', serif; font-size: 18px; color: var(--verde); margin-bottom: 8px;">Nota metodológica</div>
+    <p style="color: var(--ink-soft); font-size: 13px; line-height: 1.6; max-width: 1100px;">
+      Os <strong style="color: var(--ink);">indicadores 1 a 5</strong> têm metas alinhadas com o <strong style="color: var(--ink);">Plano de Ação oficial do IQVIA</strong>. Os indicadores <strong style="color: var(--ink);">6 a 12</strong> têm baseline ainda por apurar — as metas foram <strong style="color: var(--ink);">definidas pela equipa coordenadora do PAI-IC</strong>, com apoio em benchmarks internacionais (UpHill, Karolinska Institute, ESC Heart Failure Association) e na arquitetura clínica do PAI-IC ULSLO. As metas 2027 representam a consolidação progressiva do percurso (objetivo de cobertura de 50% da população alvo com PIC ativo). Todos os valores devem ser revistos trimestralmente após o arranque operacional do piloto.
+    </p>
+  </div>
+
+</div>
+
+</div>
+
+<div class="footer">
+  <strong>PAI-IC · ULS Loures-Odivelas · Dashboard de monitorização 2026–2027</strong><br>
+  Baseado no Plano de Ação oficial do IQVIA (12 objetivos) · Documento PAI-IC ULSLO v4 (5 níveis assistenciais, 9 fatores críticos) · Referencial clínico: 2026 ESC Guidelines for the management of heart failure (Eur Heart J 2026; ehag100) · Fase piloto: 56 utentes USF da Ramada · Checklist pré-alta NEIC/SPMI (Bettencourt et al., 2021) · Resultados auditados UpHill / ULS Coimbra (-29% hospitalizações, -25% urgências, €508/QALY)
+</div>
+
+<script>
+  // Tabs
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+    if (name === 'progresso') setTimeout(renderCharts, 50);
+  }
+
+  // Toggle cards
+  function toggleCard(head) {
+    head.parentElement.classList.toggle('fechado');
+  }
+
+  // Chart defaults
+  Chart.defaults.color = '#a8c2d6';
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.font.size = 11;
+
+  let chartsRendered = false;
+  function renderCharts() {
+    if (chartsRendered) return;
+    chartsRendered = true;
+
+    // EIXOS pie
+    new Chart(document.getElementById('chartEixos'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Clínico', 'Acesso & Articulação', 'Eficiência', 'Pessoa', 'Experiência & Valor'],
+        datasets: [{
+          data: [4, 4, 2, 2, 3],
+          backgroundColor: ['#3dd9a8', '#3aa0e8', '#f5d76e', '#b873e8', '#7b3fd6'],
+          borderColor: '#0a1929',
+          borderWidth: 3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+          legend: { position: 'right', labels: { padding: 14, usePointStyle: true, pointStyle: 'circle' } },
+          tooltip: {
+            backgroundColor: '#0a1929',
+            titleColor: '#3dd9a8',
+            bodyColor: '#e8f1f8',
+            borderColor: '#13a981',
+            borderWidth: 1,
+            padding: 12
+          }
+        }
+      }
+    });
+
+    // TRAJETORIA radar
+    new Chart(document.getElementById('chartTrajetoria'), {
+      type: 'radar',
+      data: {
+        labels: ['Identificação', 'Contactos', 'Hiper-freq.', 'Polimedicação', 'Alto risco', 'Internamentos'],
+        datasets: [
+          { label: '2024', data: [100,100,100,100,100,100], borderColor: '#e85d75', backgroundColor: 'rgba(232,93,117,.1)', pointRadius: 3, borderWidth: 2 },
+          { label: 'Meta 2026', data: [105, 95, 90, 95, 95, 90], borderColor: '#3dd9a8', backgroundColor: 'rgba(61,217,168,.15)', pointRadius: 3, borderWidth: 2 },
+          { label: 'Meta 2027', data: [110, 90, 85, 90, 90, 85], borderColor: '#f5d76e', backgroundColor: 'rgba(245,215,110,.15)', pointRadius: 3, borderWidth: 2 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          r: {
+            min: 60, max: 120,
+            grid: { color: 'rgba(168,194,214,.15)' },
+            angleLines: { color: 'rgba(168,194,214,.15)' },
+            pointLabels: { color: '#a8c2d6', font: { size: 11 } },
+            ticks: { display: false }
+          }
+        },
+        plugins: {
+          legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true } },
+          tooltip: { backgroundColor: '#0a1929', borderColor: '#13a981', borderWidth: 1, callbacks: { label: c => c.dataset.label + ': ' + c.parsed.r + ' (base 100 = 2024)' } }
+        }
+      }
+    });
+
+    // MAPA REDUCAO bar comparativa
+    new Chart(document.getElementById('chartRedu'), {
+      type: 'bar',
+      data: {
+        labels: ['Identif. PAI', 'Contactos/utente', 'Hiper-freq. SU', 'Polimedicação', 'Alto risco 12m', 'Internamentos IC'],
+        datasets: [
+          { label: 'Base 2024', data: [2470, 19, 169, 1816, 155, 1022], backgroundColor: 'rgba(168,194,214,.4)', borderColor: '#6f8aa3', borderWidth: 1 },
+          { label: 'Meta 2026', data: [2594, 18.05, 152, 1725, 147, 920], backgroundColor: 'rgba(61,217,168,.6)', borderColor: '#13a981', borderWidth: 1 },
+          { label: 'Meta 2027', data: [2717, 17.1, 144, 1634, 140, 869], backgroundColor: 'rgba(245,215,110,.6)', borderColor: '#c9a227', borderWidth: 1 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          y: { type: 'logarithmic', grid: { color: 'rgba(168,194,214,.08)' }, ticks: { color: '#a8c2d6' } },
+          x: { grid: { display: false }, ticks: { color: '#a8c2d6' } }
+        },
+        plugins: {
+          legend: { position: 'top', labels: { padding: 14, usePointStyle: true } },
+          tooltip: { backgroundColor: '#0a1929', borderColor: '#13a981', borderWidth: 1, padding: 12 }
+        }
+      }
+    });
+
+    // RESP horizontal
+    new Chart(document.getElementById('chartResp'), {
+      type: 'bar',
+      data: {
+        labels: ['Cuidados Hospitalares (CH)', 'Cuidados Primários (CSP)', 'Coordenação Central', 'UMR · Monitorização Remota'],
+        datasets: [{
+          label: 'Ações',
+          data: [18, 14, 7, 6],
+          backgroundColor: ['#3dd9a8', '#3aa0e8', '#b873e8', '#f5d76e'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { grid: { color: 'rgba(168,194,214,.08)' }, ticks: { color: '#a8c2d6' } },
+          y: { grid: { display: false }, ticks: { color: '#a8c2d6', font: { size: 11 } } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { backgroundColor: '#0a1929', borderColor: '#13a981', borderWidth: 1, padding: 12 }
+        }
+      }
+    });
+
+    // PRAZO trimestre
+    new Chart(document.getElementById('chartPrazo'), {
+      type: 'bar',
+      data: {
+        labels: ['Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026', 'Contínuo'],
+        datasets: [{
+          label: 'Ações iniciadas',
+          data: [8, 9, 4, 1, 4],
+          backgroundColor: ['#3aa0e8', '#3dd9a8', '#f5d76e', '#b873e8', '#a8c2d6'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(168,194,214,.08)' }, ticks: { color: '#a8c2d6', stepSize: 2 } },
+          x: { grid: { display: false }, ticks: { color: '#a8c2d6' } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { backgroundColor: '#0a1929', borderColor: '#13a981', borderWidth: 1, padding: 12 }
+        }
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
